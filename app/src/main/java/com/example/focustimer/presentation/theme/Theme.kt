@@ -1,4 +1,4 @@
-package com.example.focustimer.ui.theme
+package com.example.focustimer.presentation.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
