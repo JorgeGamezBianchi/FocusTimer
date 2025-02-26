@@ -19,9 +19,9 @@ fun CircleDot(
 ){
     Box(
         modifier = modifier
-            .background(color)
             .size(FocusTimerTheme.dimens.iconSizeSmall)
             .clip(shape = CircleShape)
+            .background(color)
     )
 }
 
