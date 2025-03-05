@@ -11,8 +11,10 @@ import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSiz
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.ui.Modifier
 import com.example.focustimer.presentation.home.HomeScreen
+import com.example.focustimer.presentation.home.HomeScreenViewModel
 import com.example.focustimer.presentation.theme.FocusTimerTheme
 
+internal val viewModel: HomeScreenViewModel = HomeScreenViewModel()
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,14 +22,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val windowSize = calculateWindowSizeClass(this)
-            FocusTimerTheme (
-                windowSize = windowSize.widthSizeClass
-            ) {
+            FocusTimerTheme ( windowSize = windowSize.widthSizeClass ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    HomeScreen()
+                    HomeScreen(viewModel)
                 }
             }
         }

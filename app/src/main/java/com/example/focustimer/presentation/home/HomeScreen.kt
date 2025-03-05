@@ -13,17 +13,22 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.focustimer.R
+import com.example.focustimer.domain.model.TimerTypeEnum
 import com.example.focustimer.presentation.components.AutoResizedText
 import com.example.focustimer.presentation.components.BorderedIcon
 import com.example.focustimer.presentation.components.CircleDot
@@ -33,7 +38,22 @@ import com.example.focustimer.presentation.components.TimerTypeItem
 import com.example.focustimer.presentation.theme.FocusTimerTheme
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(viewModel: HomeScreenViewModel = HomeScreenViewModel()) {
+
+    /*
+    * FORMAS PARA DECLARAR LOS ESTADOS EN COMPOSE
+    *
+    * val mutableState = remember { mutableStateOf(value) }
+    * var value by remember { mutableStateOf(default) }
+    * val (value, setValue) = remember { mutableStateOf(default) }
+    *
+    * */
+
+    val timeState by remember { mutableStateOf(viewModel.timerValueState) }
+    val timeTypeState by remember { mutableStateOf(viewModel.timerTypeState) }
+    val roundsState by remember { mutableStateOf(viewModel.roundsState) }
+    val todayTimeState by remember { mutableStateOf(viewModel.todayTimeState) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -53,13 +73,13 @@ fun HomeScreen() {
             )
         }
         AutoResizedText(
-            text = "Focus Timer",
+            text = "Cronómetro",
             textStyle = MaterialTheme.typography.displayMedium.copy(
                 color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center
             )
         )
-        Spacer(modifier = Modifier.height(FocusTimerTheme.dimens.spacerMedium))
+        Spacer(modifier = Modifier.height(FocusTimerTheme.dimens.spacerSmall))
 
         Row {
             CircleDot()
@@ -71,23 +91,26 @@ fun HomeScreen() {
             CircleDot(color = MaterialTheme.colorScheme.tertiary)
         }
 
-        Spacer(modifier = Modifier.height(FocusTimerTheme.dimens.spacerMedium))
+        Spacer(modifier = Modifier.height(FocusTimerTheme.dimens.spacerSmall))
 
         TimerSession(
-            time = "25:00",
+            time = viewModel.millisToMinutes(timeState.value),
             onIncreseTap = {
-                // TODO "IMPLEMENTS THE START FUNCTION"
+                viewModel.onIncreseTime()
             },
             onDecreseTap = {
-                // TODO "IMPLEMENTS THE START FUNCTION"
+                viewModel.onDecreseTime()
             }
         )
 
-        Spacer(modifier = Modifier.height(FocusTimerTheme.dimens.spacerMedium))
+        Spacer(modifier = Modifier.height(FocusTimerTheme.dimens.spacerSmall))
 
-        TimerTypeSession( /*onTap = { TODO "IMPLEMENTS THE START FUNCTION" }*/ )
+        TimerTypeSession(
+            type = timeTypeState.value,
+            onTap = { type -> viewModel.onUpdateType(type) }
+        )
 
-        Spacer(modifier = Modifier.height(FocusTimerTheme.dimens.spacerMedium))
+        Spacer(modifier = Modifier.height(FocusTimerTheme.dimens.spacerSmall))
 
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -99,7 +122,7 @@ fun HomeScreen() {
                 textColor = MaterialTheme.colorScheme.surface,
                 buttonColor = MaterialTheme.colorScheme.primary,
                 onTap = {
-                    // TODO "IMPLEMENTS THE START FUNCTION"
+                    viewModel.onStartTimer()
                 }
             )
             CustomButton(
@@ -107,17 +130,17 @@ fun HomeScreen() {
                 textColor = MaterialTheme.colorScheme.primary,
                 buttonColor = MaterialTheme.colorScheme.surface,
                 onTap = {
-                    // TODO "IMPLEMENTS THE START FUNCTION"
+                    viewModel.onCancelTimer()
                 }
             )
         }
 
-        Spacer(modifier = Modifier.height(FocusTimerTheme.dimens.spacerMedium))
+        Spacer(modifier = Modifier.height(FocusTimerTheme.dimens.spacerSmall))
 
         InformationSession(
             modifier = Modifier.weight(1f),
-            round = "10",
-            time = "25:00"
+            round = roundsState.value.toString(),
+            time = viewModel.millisToMinutes(todayTimeState.value)
         )
     }
 }
@@ -169,34 +192,30 @@ fun TimerSession(
 @Composable
 fun TimerTypeSession(
     modifier: Modifier = Modifier,
-    //onTap: () -> Unit = {}
+    type: TimerTypeEnum,
+    onTap: (TimerTypeEnum) -> Unit = {}
 ) {
     val gridCount = 3
-    val itemsSpacing = FocusTimerTheme.dimens.paddingNormal
+    val itemsSpacing = Arrangement.spacedBy(FocusTimerTheme.dimens.paddingNormal)
     LazyVerticalGrid(
         modifier = modifier
             .fillMaxWidth()
             .height(FocusTimerTheme.dimens.spacerLarge),
         columns = GridCells.Fixed(gridCount),
-        horizontalArrangement = Arrangement.spacedBy(itemsSpacing),
-        verticalArrangement = Arrangement.spacedBy(itemsSpacing)
+        horizontalArrangement = itemsSpacing,
+        verticalArrangement = itemsSpacing
     ) {
-        item(key = "FT") {
+        items(
+            TimerTypeEnum.entries.toTypedArray(),
+            key = { it.title }
+        ) {
             TimerTypeItem(
-                text = "Focus Timer",
-                textColor = MaterialTheme.colorScheme.primary
-            )
-        }
-        item(key = "SB") {
-            TimerTypeItem(
-                text = "Short Break",
-                textColor = MaterialTheme.colorScheme.primary
-            )
-        }
-        item(key = "LB") {
-            TimerTypeItem(
-                text = "Long Break",
-                textColor = MaterialTheme.colorScheme.primary
+                text = it.title,
+                textColor = if (type == it)
+                    MaterialTheme.colorScheme.primary
+                else
+                    MaterialTheme.colorScheme.secondary,
+                onTap = { onTap(it) }
             )
         }
     }
@@ -216,13 +235,19 @@ fun InformationSession(
             modifier = Modifier.align(Alignment.BottomCenter),
         ){
             InformationItem(
-                modifier = Modifier.fillMaxWidth().weight(1f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
                 text = round,
                 label = "rounds"
             )
-            Spacer(modifier = modifier.fillMaxWidth().weight(1f))
+            Spacer(modifier = modifier
+                .fillMaxWidth()
+                .weight(1f))
             InformationItem(
-                modifier = Modifier.fillMaxWidth().weight(1f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
                 text = time,
                 label = "time"
             )
